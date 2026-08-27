@@ -8,6 +8,8 @@ def extract_video_info(url: str) -> Dict[str, Any]:
     Extracts video metadata and format streams with yt-dlp.
     Runs synchronously in threadpool to keep FastAPI event loop non-blocking.
     """
+    cookie_file = None
+
     # 1. Check for cookies in Environment Variables
     cookie_env_raw = os.environ.get('YOUTUBE_COOKIES')
     cookie_env_b64 = os.environ.get('YOUTUBE_COOKIES_BASE64')
