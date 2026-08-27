@@ -8,17 +8,22 @@ def extract_video_info(url: str) -> Dict[str, Any]:
     Extracts video metadata and format streams with yt-dlp.
     Runs synchronously in threadpool to keep FastAPI event loop non-blocking.
     """
-    # 1. Check for cookies passed as Base64 in Environment Variable (Best for Dokploy/Cloud)
+    # 1. Check for cookies in Environment Variables
+    cookie_env_raw = os.environ.get('YOUTUBE_COOKIES')
     cookie_env_b64 = os.environ.get('YOUTUBE_COOKIES_BASE64')
-    if cookie_env_b64:
+    
+    if cookie_env_raw or cookie_env_b64:
         temp_env_cookie = '/tmp/yt_cookies.txt' if os.name != 'nt' else os.path.join(os.getcwd(), 'temp_cookies.txt')
         try:
-            import base64
             with open(temp_env_cookie, 'w', encoding='utf-8') as f:
-                f.write(base64.b64decode(cookie_env_b64).decode('utf-8'))
+                if cookie_env_raw:
+                    f.write(cookie_env_raw)
+                elif cookie_env_b64:
+                    import base64
+                    f.write(base64.b64decode(cookie_env_b64).decode('utf-8'))
             cookie_file = temp_env_cookie
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Error loading env cookies: {e}")
 
     # 2. Check for cookies.txt in multiple common locations
     if not cookie_file:
