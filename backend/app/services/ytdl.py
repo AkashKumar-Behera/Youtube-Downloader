@@ -45,6 +45,13 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         'extract_flat': False,
         'youtube_include_dash_manifest': True,
         'youtube_include_hls_manifest': False,
+        # Rotate clients (ios, android, web) - iOS/Android clients rarely trigger bot checks on Datacenter/VPS IPs
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['ios', 'android', 'web', 'mweb'],
+                'player_skip': ['webpage', 'configs']
+            }
+        }
     }
 
     if cookie_file:
