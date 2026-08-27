@@ -231,7 +231,7 @@ export default function App() {
                 onClick={() => setActiveTab('video')}
               >
                 <Video size={18} />
-                Video Qualities ({videoData.video_streams?.length || 0 + videoData.combined_streams?.length || 0})
+                Video Qualities ({(videoData.video_streams?.length || 0) + (videoData.combined_streams?.length || 0)})
               </button>
               <button 
                 className={`tab-btn ${activeTab === 'audio' ? 'active' : ''}`}

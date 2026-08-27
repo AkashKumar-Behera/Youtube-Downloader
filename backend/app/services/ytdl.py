@@ -72,14 +72,16 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         ext = f.get('ext', '')
         filesize = f.get('filesize') or f.get('filesize_approx')
         vcodec = f.get('vcodec', 'none')
-        acodec = f.get('acodec', 'none')
-        height = f.get('height')
-        fps = f.get('fps')
-        tbr = f.get('tbr')
-        abr = f.get('abr')
+        # Robust check for codecs
+        vcodec_str = str(vcodec).lower() if vcodec else 'none'
+        acodec_str = str(acodec).lower() if acodec else 'none'
 
-        # Audio only
-        if vcodec == 'none' and acodec != 'none':
+        is_video_only = vcodec_str != 'none' and acodec_str == 'none'
+        is_audio_only = vcodec_str == 'none' and acodec_str != 'none'
+        is_combined = vcodec_str != 'none' and acodec_str != 'none'
+
+        # Audio only stream
+        if is_audio_only:
             audio_entry = {
                 'format_id': format_id,
                 'ext': ext,
@@ -89,11 +91,11 @@ def extract_video_info(url: str) -> Dict[str, Any]:
                 'url': stream_url
             }
             audio_streams.append(audio_entry)
-            if not best_audio or (abr and best_audio.get('abr', 0) < abr):
+            if not best_audio or (abr and (best_audio.get('abr') or 0) < abr):
                 best_audio = audio_entry
 
-        # Video + Audio combined (e.g. 720p, 360p legacy)
-        elif vcodec != 'none' and acodec != 'none' and height:
+        # Video + Audio combined stream (e.g. 720p, 360p)
+        elif is_combined and height:
             combined_streams.append({
                 'format_id': format_id,
                 'ext': ext,
@@ -107,8 +109,8 @@ def extract_video_info(url: str) -> Dict[str, Any]:
                 'direct_download': True
             })
 
-        # Video only (Adaptive 1080p, 1440p, 4K, 8K)
-        elif vcodec != 'none' and acodec == 'none' and height:
+        # Video only adaptive stream (1080p, 1440p, 4K, 8K)
+        elif is_video_only and height:
             video_streams.append({
                 'format_id': format_id,
                 'ext': ext,
