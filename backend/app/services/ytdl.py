@@ -1,77 +1,58 @@
 import os
+import json
 import asyncio
+import subprocess
 from typing import Dict, Any, List, Optional
-import yt_dlp
 
 def extract_video_info(url: str) -> Dict[str, Any]:
     """
-    Extracts video metadata and format streams with yt-dlp.
-    Runs synchronously in threadpool to keep FastAPI event loop non-blocking.
+    Extracts video metadata and format streams by calling yt-dlp CLI directly.
+    Matches the exact working subprocess execution from Yt-downloader.
     """
-    cookie_file = None
-
-    # 1. Check for cookies in Environment Variables
-    cookie_env_raw = os.environ.get('YOUTUBE_COOKIES')
-    cookie_env_b64 = os.environ.get('YOUTUBE_COOKIES_BASE64')
-    
-    if cookie_env_raw or cookie_env_b64:
-        temp_env_cookie = '/tmp/yt_cookies.txt' if os.name != 'nt' else os.path.join(os.getcwd(), 'temp_cookies.txt')
-        try:
-            with open(temp_env_cookie, 'w', encoding='utf-8') as f:
-                if cookie_env_raw:
-                    f.write(cookie_env_raw)
-                elif cookie_env_b64:
-                    import base64
-                    f.write(base64.b64decode(cookie_env_b64).decode('utf-8'))
-            cookie_file = temp_env_cookie
-        except Exception as e:
-            print(f"Error loading env cookies: {e}")
-
-    # 2. Check for cookies.txt in multiple common locations
-    if not cookie_file:
-        possible_cookie_paths = [
-            os.path.join(os.getcwd(), 'cookies.txt'),
-            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'cookies.txt'),
-            '/app/cookies.txt',
-            'cookies.txt'
-        ]
-        for path in possible_cookie_paths:
-            if os.path.exists(path) and os.path.getsize(path) > 0:
-                cookie_file = path
-                break
-
-    # Clean URL: Remove playlist parameters if analyzing single video to avoid YouTube bot trigger
+    # Clean URL: Remove playlist parameters
     if 'watch?v=' in url and '&list=' in url:
         url = url.split('&list=')[0]
     if 'watch?v=' in url and '&index=' in url:
         url = url.split('&index=')[0]
 
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-        'extract_flat': False,
-        'youtube_include_dash_manifest': True,
-        'youtube_include_hls_manifest': False,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'ios', 'mweb'],
-                'player_skip': ['webpage', 'configs']
-            }
-        },
-        'http_headers': {
-            'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-us,en;q=0.5',
-        }
-    }
+    # Look for cookies.txt
+    possible_cookie_paths = [
+        os.path.join(os.getcwd(), 'backend', 'app', 'cookies.txt'),
+        os.path.join(os.getcwd(), 'cookies.txt'),
+        '/app/backend/app/cookies.txt',
+        '/app/cookies.txt',
+        'cookies.txt'
+    ]
+    
+    cookie_arg = []
+    for path in possible_cookie_paths:
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            cookie_arg = ['--cookies', path]
+            break
 
-    if cookie_file:
-        ydl_opts['cookiefile'] = cookie_file
+    # Build yt-dlp CLI command
+    cmd = [
+        'yt-dlp',
+        '--no-warnings',
+        '--skip-download',
+        '-J',  # Dump JSON
+        *cookie_arg,
+        url
+    ]
 
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        encoding='utf-8',
+        errors='replace'
+    )
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    if result.returncode != 0:
+        error_msg = result.stderr.strip() or "Failed to extract video information"
+        raise Exception(error_msg)
+
+    info = json.loads(result.stdout)
         
         # Parse formats
         formats = info.get('formats', [])
