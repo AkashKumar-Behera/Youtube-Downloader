@@ -40,6 +40,12 @@ def extract_video_info(url: str) -> Dict[str, Any]:
                 cookie_file = path
                 break
 
+    # Clean URL: Remove playlist parameters if analyzing single video to avoid YouTube bot trigger
+    if 'watch?v=' in url and '&list=' in url:
+        url = url.split('&list=')[0]
+    if 'watch?v=' in url and '&index=' in url:
+        url = url.split('&index=')[0]
+
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -47,12 +53,16 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         'extract_flat': False,
         'youtube_include_dash_manifest': True,
         'youtube_include_hls_manifest': False,
-        # Rotate clients (ios, android, web) - iOS/Android clients rarely trigger bot checks on Datacenter/VPS IPs
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios', 'android', 'web', 'mweb'],
+                'player_client': ['android', 'ios', 'mweb'],
                 'player_skip': ['webpage', 'configs']
             }
+        },
+        'http_headers': {
+            'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
         }
     }
 
