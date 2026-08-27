@@ -37,6 +37,9 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         'youtube_include_hls_manifest': False,
     }
 
+    if cookie_file:
+        ydl_opts['cookiefile'] = cookie_file
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
