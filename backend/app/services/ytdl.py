@@ -37,12 +37,19 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         'youtube_include_hls_manifest': False,
     }
 
-    if cookie_file:
-        ydl_opts['cookiefile'] = cookie_file
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as e:
+        err_str = str(e)
+        if "This video is unavailable" in err_str or "Video unavailable" in err_str:
+            raise Exception("This YouTube video is unavailable, private, or has been deleted.")
+        elif "Sign in to confirm" in err_str:
+            raise Exception("YouTube requested verification. Please check cookies.")
+        elif "Requested format is not available" in err_str:
+            raise Exception("This video is unavailable or has no downloadable media streams.")
+        raise Exception(err_str)
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
-    
     # Parse formats
     formats = info.get('formats', [])
     video_streams: List[Dict[str, Any]] = []
