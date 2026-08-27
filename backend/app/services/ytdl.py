@@ -17,10 +17,10 @@ def extract_video_info(url: str) -> Dict[str, Any]:
 
     # Look for cookies.txt
     possible_cookie_paths = [
-        os.path.join(os.getcwd(), 'backend', 'app', 'cookies.txt'),
-        os.path.join(os.getcwd(), 'cookies.txt'),
         '/app/backend/app/cookies.txt',
         '/app/cookies.txt',
+        os.path.join(os.getcwd(), 'backend', 'app', 'cookies.txt'),
+        os.path.join(os.getcwd(), 'cookies.txt'),
         'cookies.txt'
     ]
     
@@ -30,11 +30,12 @@ def extract_video_info(url: str) -> Dict[str, Any]:
             cookie_arg = ['--cookies', path]
             break
 
-    # Build yt-dlp CLI command
+    # Build yt-dlp CLI command with Android/iOS client rotation to guarantee bypass
     cmd = [
         'yt-dlp',
         '--no-warnings',
         '--skip-download',
+        '--extractor-args', 'youtube:player_client=ios,android,mweb;player_skip=webpage,configs',
         '-J',  # Dump JSON
         *cookie_arg,
         url
