@@ -37,6 +37,20 @@ docker stats yt-downloader
 
 ## 💻 Local Development Setup
 
+## 🌐 Deployment with Dokploy / Coolify / PaaS
+
+1. Create a new **Application** and select this GitHub repository.
+2. Build Type: **`Dockerfile`**.
+3. Under **Environment Variables**, add:
+   ```env
+   PORT=8000
+   YOUTUBE_COOKIES_BASE64=<your_base64_encoded_cookies>
+   ```
+4. Set container port to `8000` and map your custom domain (e.g., `https://ytdl.looplyn.tech`).
+5. Enable **Auto-Deploy on Git Push** for seamless CI/CD updates.
+
+---
+
 ### Backend (Python FastAPI)
 ```bash
 cd backend
@@ -57,3 +71,4 @@ npm install
 npm run dev
 ```
 Open `http://localhost:3000` in your browser.
+
