@@ -1,0 +1,15 @@
+services:
+  youtube-downloader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yt-downloader
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 250M # Hard ceiling to guarantee ultra-low memory
+    environment:
+      - PORT=8000
