@@ -29,6 +29,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source code
 COPY backend/app /app/backend/app
 
+# Copy cookies.txt if available for YouTube authentication bypass
+COPY cookies*.txt /app/cookies.txt
+
 # Copy built frontend from Stage 1
 COPY --from=frontend-builder /frontend/dist /app/frontend/dist
 

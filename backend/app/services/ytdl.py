@@ -1,3 +1,4 @@
+import os
 import asyncio
 from typing import Dict, Any, List, Optional
 import yt_dlp
@@ -7,6 +8,31 @@ def extract_video_info(url: str) -> Dict[str, Any]:
     Extracts video metadata and format streams with yt-dlp.
     Runs synchronously in threadpool to keep FastAPI event loop non-blocking.
     """
+    # 1. Check for cookies passed as Base64 in Environment Variable (Best for Dokploy/Cloud)
+    cookie_env_b64 = os.environ.get('YOUTUBE_COOKIES_BASE64')
+    if cookie_env_b64:
+        temp_env_cookie = '/tmp/yt_cookies.txt' if os.name != 'nt' else os.path.join(os.getcwd(), 'temp_cookies.txt')
+        try:
+            import base64
+            with open(temp_env_cookie, 'w', encoding='utf-8') as f:
+                f.write(base64.b64decode(cookie_env_b64).decode('utf-8'))
+            cookie_file = temp_env_cookie
+        except Exception:
+            pass
+
+    # 2. Check for cookies.txt in multiple common locations
+    if not cookie_file:
+        possible_cookie_paths = [
+            os.path.join(os.getcwd(), 'cookies.txt'),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'cookies.txt'),
+            '/app/cookies.txt',
+            'cookies.txt'
+        ]
+        for path in possible_cookie_paths:
+            if os.path.exists(path) and os.path.getsize(path) > 0:
+                cookie_file = path
+                break
+
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -15,6 +41,10 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         'youtube_include_dash_manifest': True,
         'youtube_include_hls_manifest': False,
     }
+
+    if cookie_file:
+        ydl_opts['cookiefile'] = cookie_file
+
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
