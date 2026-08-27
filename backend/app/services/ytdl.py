@@ -30,13 +30,12 @@ def extract_video_info(url: str) -> Dict[str, Any]:
             cookie_arg = ['--cookies', path]
             break
 
-    # Build yt-dlp CLI command with Android/iOS client rotation to guarantee bypass
+    # Build yt-dlp CLI command with all formats dumped cleanly
     cmd = [
         'yt-dlp',
         '--no-warnings',
         '--skip-download',
-        '--extractor-args', 'youtube:player_client=ios,android,mweb;player_skip=webpage,configs',
-        '-J',  # Dump JSON
+        '-J',  # Dump all available formats and JSON
         *cookie_arg,
         url
     ]
