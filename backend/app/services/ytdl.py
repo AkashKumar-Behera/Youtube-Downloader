@@ -33,6 +33,7 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         'no_warnings': True,
         'skip_download': True,
         'extract_flat': False,
+        'format': 'all',
         'youtube_include_dash_manifest': True,
         'youtube_include_hls_manifest': False,
     }
