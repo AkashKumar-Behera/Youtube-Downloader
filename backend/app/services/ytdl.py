@@ -72,6 +72,12 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         ext = f.get('ext', '')
         filesize = f.get('filesize') or f.get('filesize_approx')
         vcodec = f.get('vcodec', 'none')
+        acodec = f.get('acodec', 'none')
+        height = f.get('height')
+        fps = f.get('fps')
+        tbr = f.get('tbr')
+        abr = f.get('abr')
+
         # Robust check for codecs
         vcodec_str = str(vcodec).lower() if vcodec else 'none'
         acodec_str = str(acodec).lower() if acodec else 'none'
