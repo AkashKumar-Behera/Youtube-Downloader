@@ -17,9 +17,10 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Install minimal build tools if required
+# Install minimal runtime tools including Node.js for solving YouTube JS challenges (EJS)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Install backend dependencies
