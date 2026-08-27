@@ -1,13 +1,11 @@
 import os
-import json
 import asyncio
-import subprocess
 from typing import Dict, Any, List, Optional
+import yt_dlp
 
 def extract_video_info(url: str) -> Dict[str, Any]:
     """
-    Extracts video metadata and format streams by calling yt-dlp CLI directly.
-    Matches the exact working subprocess execution from Yt-downloader.
+    Extracts video metadata and format streams directly with Python yt-dlp instance.
     """
     # Clean URL: Remove playlist parameters
     if 'watch?v=' in url and '&list=' in url:
@@ -24,36 +22,26 @@ def extract_video_info(url: str) -> Dict[str, Any]:
         'cookies.txt'
     ]
     
-    cookie_arg = []
+    cookie_file = None
     for path in possible_cookie_paths:
         if os.path.exists(path) and os.path.getsize(path) > 0:
-            cookie_arg = ['--cookies', path]
+            cookie_file = path
             break
 
-    # Build yt-dlp CLI command with proper client fallback to extract all video and audio streams
-    cmd = [
-        'yt-dlp',
-        '--no-warnings',
-        '--skip-download',
-        '--extractor-args', 'youtube:player_client=mweb,web,android',
-        '-J',
-        *cookie_arg,
-        url
-    ]
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': True,
+        'extract_flat': False,
+        'youtube_include_dash_manifest': True,
+        'youtube_include_hls_manifest': False,
+    }
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        encoding='utf-8',
-        errors='replace'
-    )
+    if cookie_file:
+        ydl_opts['cookiefile'] = cookie_file
 
-    if result.returncode != 0:
-        error_msg = result.stderr.strip() or "Failed to extract video information"
-        raise Exception(error_msg)
-
-    info = json.loads(result.stdout)
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
     
     # Parse formats
     formats = info.get('formats', [])
