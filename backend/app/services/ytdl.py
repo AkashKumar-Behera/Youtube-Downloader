@@ -30,12 +30,13 @@ def extract_video_info(url: str) -> Dict[str, Any]:
             cookie_arg = ['--cookies', path]
             break
 
-    # Build yt-dlp CLI command with all formats dumped cleanly
+    # Build yt-dlp CLI command with explicit all-format acceptance
     cmd = [
         'yt-dlp',
         '--no-warnings',
         '--skip-download',
-        '-J',  # Dump all available formats and JSON
+        '-f', 'all',
+        '-J',  # Dump all available formats into JSON
         *cookie_arg,
         url
     ]
